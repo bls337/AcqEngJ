@@ -109,6 +109,7 @@ public class AcquisitionEvent {
    public AcquisitionEvent(List<AcquisitionEvent> sequence) {
       acquisition_ = sequence.get(0).acquisition_;
       miniumumStartTimeMs_ = sequence.get(0).miniumumStartTimeMs_;
+      timeoutMs_ = sequence.get(0).timeoutMs_;
       sequence_ = new ArrayList<>();
       sequence_.addAll(sequence);
       TreeSet<Double> zPosSet = new TreeSet<Double>();
@@ -586,6 +587,19 @@ public class AcquisitionEvent {
 
    public Double getTimeoutMs() {
       return timeoutMs_;
+   }
+
+   /**
+    * Set how long to wait (in ms) for this event's image(s) to arrive before
+    * timing out. The comparison is against the total elapsed time since image
+    * collection for this event (or the hardware sequence containing it) began,
+    * so for sequences this should cover the whole sequence duration, not a
+    * single frame interval. Null (the default) means wait indefinitely.
+    *
+    * @param timeoutMs timeout in milliseconds, or null to wait indefinitely
+    */
+   public void setTimeoutMs(Double timeoutMs) {
+      timeoutMs_ = timeoutMs;
    }
 
    public void setTimeIndex(int index) {
