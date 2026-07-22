@@ -116,4 +116,32 @@ public class TestMergeSequencingProperties {
       // The property is simply: this call completes without throwing.
       HARNESS.merge(events.iterator());
    }
+
+   /**
+    * Untested-surface hunt (AEJ-15 territory): events that carry DIFFERENT sets of named
+    * stage-coordinate devices across the sequence must not crash the merge decision. The
+    * review noted isSequencable can NPE when consecutive events have different named-stage
+    * device sets (e.g. a trailing event missing a piezo coordinate). This fuzzes exactly
+    * that: each event gets a random subset of {PiezoA, PiezoB, PiezoC}.
+    */
+   @Property(tries = 3000)
+   void mergeWithVaryingNamedStageSetsNeverThrows(
+         @ForAll @IntRange(min = 1, max = 6) int n,
+         @ForAll long seed) throws Exception {
+      final String[] devices = {"PiezoA", "PiezoB", "PiezoC"};
+      Random r = new Random(seed);
+      List<AcquisitionEvent> events = new ArrayList<>();
+      for (int i = 0; i < n; i++) {
+         AcquisitionEvent e = ev();
+         for (String d : devices) {
+            if (r.nextBoolean()) {
+               e.setStageCoordinate(d, r.nextInt(3) * 10.0);
+            }
+         }
+         events.add(e);
+      }
+      // Property: the merge decision + constructor complete without throwing on any
+      // combination of named-stage device sets.
+      HARNESS.merge(events.iterator());
+   }
 }
