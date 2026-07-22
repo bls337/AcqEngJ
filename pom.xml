@@ -58,6 +58,15 @@
          <version>4.13.2</version>
          <scope>test</scope>
        </dependency>
+       <!-- Property-based testing (PoC 2026-07-21). jqwik runs on the JUnit Platform;
+            works on the current build JVM (no Java 17 required). Run jqwik tests with
+            `mvn test -Dtest=<JqwikClass>` (surefire uses the platform provider). -->
+       <dependency>
+         <groupId>net.jqwik</groupId>
+         <artifactId>jqwik</artifactId>
+         <version>1.9.1</version>
+         <scope>test</scope>
+       </dependency>
     </dependencies>
 
     <build>
