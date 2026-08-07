@@ -627,6 +627,14 @@ public class Engine {
                   correspondingEvent = multiCamAdapterCameraEventLists.get(actualCamIndex).remove(0);
                }
             }
+            if (correspondingEvent.shouldDiscardImage()) {
+               // The event has already been removed from its camera's list above, so the events
+               // that follow stay aligned with the frames that follow. Skipping here rather than
+               // later means the image is neither stamped with this event's axes nor sent to the
+               // dataset, which is the point: it was acquired only because the hardware emitted a
+               // trigger for it.
+               continue;
+            }
             // add standard metadata
             AcqEngMetadata.addImageMetadata(ti.tags, correspondingEvent,
                     currentTime - correspondingEvent.acquisition_.getStartTimeMs(), exposure);

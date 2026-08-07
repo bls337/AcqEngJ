@@ -78,6 +78,11 @@ public class AcquisitionEvent {
    //Option to not acquire an image for SLM events
    private Boolean acquireImage_ = null;
 
+   //Option to consume the image this event produces without adding it to the dataset. Used where
+   //the hardware emits more triggers than there are wanted images, so that the events and the
+   //frames stay in step: the extra frames are matched by events that discard them.
+   private boolean discardImage_ = false;
+
    //Pattern to project onto SLM. Can either be int[] or byte[]
    private Object slmImage_ = null;
 
@@ -158,6 +163,7 @@ public class AcquisitionEvent {
       e.miniumumStartTimeMs_ = miniumumStartTimeMs_;
       e.slmImage_ = slmImage_;
       e.acquireImage_ = acquireImage_;
+      e.discardImage_ = discardImage_;
       e.properties_ = new TreeSet<ThreeTuple>(this.properties_);
       e.camera_ = camera_;
       e.timeoutMs_ = timeoutMs_;
@@ -227,6 +233,10 @@ public class AcquisitionEvent {
 
          if (e.timeoutMs_ != null) {
             json.put("timeout", e.timeoutMs_);
+         }
+
+         if (e.discardImage_) {
+            json.put("discard_image", true);
          }
 
          //Coordinate indices
@@ -325,6 +335,10 @@ public class AcquisitionEvent {
 
          if (json.has("timeout")) {
             event.timeoutMs_ = json.getDouble("timeout");
+         }
+
+         if (json.has("discard_image")) {
+            event.discardImage_ = json.getBoolean("discard_image");
          }
 
          // Config group (usually this is a channel, but doesnt have to be)
@@ -485,6 +499,42 @@ public class AcquisitionEvent {
       } else {
          return configPreset_ != null || axisPositions_ != null;
       }
+   }
+
+   /**
+    * Whether the image this event produces should be discarded rather than added to the dataset.
+    * <p>
+    * An event stream normally describes the images that are wanted, one event per image. Some
+    * hardware emits more camera triggers than there are wanted images: in overlap readout, for
+    * example, a frame reads out on the trigger after the one that exposed it, so N images from N
+    * positions needs N+1 triggers, and inside a continuous sequence that extra frame does arrive.
+    * The engine pops one event per frame received, so an event stream that describes only the
+    * wanted images falls out of step with the frames and every image after the first extra one is
+    * filed against the wrong event. Marking the extra events lets the stream describe the frames
+    * the camera delivers while the dataset still receives only the images that were wanted.
+    * <p>
+    * The frame is still read off the camera and the event is still consumed; only the filing is
+    * skipped, before any metadata is attached. A discarded image therefore never reaches the data
+    * sink or any {@code TaggedImageProcessor}, produces no image-saved notification, and its axis
+    * positions are never used.
+    * <p>
+    * This is honored both inside and outside a hardware sequence. In a sequence it is read from the
+    * constituent events; setting it on a merged sequence event itself has no effect.
+    * <p>
+    * Note this is not the same as declining to acquire: the trigger is emitted regardless, and for
+    * an event outside a sequence the image is still exposed and read out before being dropped.
+    */
+   public boolean shouldDiscardImage() {
+      return discardImage_;
+   }
+
+   /**
+    * Mark the image this event produces to be discarded instead of added to the dataset.
+    *
+    * @see #shouldDiscardImage
+    */
+   public void setDiscardImage(boolean discardImage) {
+      discardImage_ = discardImage;
    }
 
    public boolean hasConfigGroup() {
