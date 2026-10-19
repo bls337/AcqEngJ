@@ -109,6 +109,7 @@ public class AcquisitionEvent {
    public AcquisitionEvent(List<AcquisitionEvent> sequence) {
       acquisition_ = sequence.get(0).acquisition_;
       miniumumStartTimeMs_ = sequence.get(0).miniumumStartTimeMs_;
+      timeoutMs_ = sequence.get(0).timeoutMs_;
       sequence_ = new ArrayList<>();
       sequence_.addAll(sequence);
       TreeSet<Double> zPosSet = new TreeSet<Double>();
@@ -586,6 +587,17 @@ public class AcquisitionEvent {
 
    public Double getTimeoutMs() {
       return timeoutMs_;
+   }
+
+   /**
+    * Set how long to wait for this event's images, in ms. Only hardware
+    * sequences check it, counting from the start of image collection, so it
+    * must cover the whole sequence. Null (the default) means no time limit.
+    *
+    * @param timeoutMs timeout in ms, or null for no time limit
+    */
+   public void setTimeoutMs(Double timeoutMs) {
+      timeoutMs_ = timeoutMs;
    }
 
    public void setTimeIndex(int index) {
